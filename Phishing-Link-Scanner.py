@@ -12,7 +12,9 @@ test_urls = [
     'http://example.com',
     'https://www.google.security-update.com',
     'http://faceb00k.com/Login',
-    'https://google.com'
+    'https://google.com',
+    'https://secure-bank-login.com',
+    'https://newphishing.xyz/login'
 ]
 
 def extract_domain_parts(url):
@@ -35,9 +37,17 @@ def check_url_status(url):
 
 def is_phishing_url(url, legitimate_domains):
     subdomain, domain, suffix = extract_domain_parts(url)
+    full_domain = f"{domain}.{suffix}"
+
+    # Check for HTTPS
+    parsed_url = urlparse(url)
+    if parsed_url.scheme != "https":
+        print(f"Warning: Insecure URL: {url}")
+        return True
 
     # Check if it's a known legitimate domain
-    if f"{domain}.{suffix}" in legitimate_domains:
+    if full_domain in legitimate_domains:
+        print(f"URL seems safe: {url}")
         return False
 
     # Check for misspelled domain names
@@ -45,14 +55,16 @@ def is_phishing_url(url, legitimate_domains):
         print(f"Potential phishing detected: {url}")
         return True
 
-    # Check URL status
+    # Check SSL certificate validity
     status = check_url_status(url)
-    if status and status != 200:
-        print(f"URL might be unsafe (status code {status}): {url}")
+    if status is None or status != 200:
+        print(f"Warning: Invalid SSL certificate: {url}")
         return True
 
+    print(f"URL seems safe: {url}")
     return False
 
 if __name__ == '__main__':
     for url in test_urls:
+        print(f"Scanning URL: {url}")
         is_phishing_url(url, legitimate_domains)
